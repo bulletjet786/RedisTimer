@@ -1,0 +1,8 @@
+/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/hello/CMakeFiles/rebuild_cache.dir
+/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/hello/CMakeFiles/edit_cache.dir
+/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/hello/CMakeFiles/hello.dir
+/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/dinger/CMakeFiles/rebuild_cache.dir
+/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/dinger/CMakeFiles/edit_cache.dir
+/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/dinger/CMakeFiles/dinger.dir
