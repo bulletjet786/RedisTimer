@@ -22,6 +22,7 @@ struct DelayMessage {
     char *id;
     char *body;
     uint32_t fire;
+    list *location; // 在时间轮中的list
 };
 struct DelayMessageNode {
     list *list;

@@ -19,17 +19,22 @@ list *computerTimeWheelBucket(DelayQueueTypeObject *dto, uint32_t delay, uint32_
 }
 
 // 如果是新增返回1，如果是替换，返回0
-int dtoSetDelayMessage(RedisModuleCtx *ctx, DelayQueueTypeObject *dto, char *id, char *message, int32_t delay) {
+int dtoSetDelayMessage(RedisModuleCtx *ctx, DelayQueueTypeObject *dto, char *id, char *message, int32_t fire) {
     int added = 1;
     uint32_t current = getTimestamp();
+
+    // 如果当前定时器已经处于被触发的状态，则取决于PX参与决定是否加入
+    if current > fire {
+
+    };
 
     DelayMessage *dm = RedisModule_Alloc(sizeof(struct DelayMessage));
     dm->id = id;
     dm->body = message;
-    dm->fire = current + delay;
+    dm->fire = fire;
     char *newId = RedisModule_Strdup(dm->id);
 
-    // 如果当前数据已经存在，则暂不支持 todo:
+    // 如果当前数据已经存在，则暂不支持 todo: NX
     dictEntry *existNode = dictFind(dto->dict, dm->id);
     if (existNode) {  // todo: dictCompareKeys
         DelayMessageNode *dmNode = (DelayMessageNode *) (existNode->v.val);
@@ -107,7 +112,7 @@ void steal(RedisModuleCtx *ctx, DelayQueueTypeObject *dto) {
                 DelayMessage *iterDm = (DelayMessage *) node->value;
                 uint32_t delay = iterDm->fire - current;
                 computerTimeWheelBucket()
-                // 计算要插入的leve节点
+                // 计算要插入的level节点
                 list *to = dto->level[i-1][iterDm->fire];
                 listDelNode(from, node);
                 listAddNodeHead(dto, )
