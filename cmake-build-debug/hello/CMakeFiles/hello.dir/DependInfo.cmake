@@ -4,9 +4,9 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/Users/wangzijie/CLionProjects/RedisLeague/hello/dinger.c" "/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/hello/CMakeFiles/hello.dir/dinger.c.o"
+  "C:/Users/85123/CLionProjects/RedisTimer/hello/hello.c" "C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/hello/CMakeFiles/hello.dir/hello.c.obj"
   )
-set(CMAKE_C_COMPILER_ID "AppleClang")
+set(CMAKE_C_COMPILER_ID "GNU")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_C

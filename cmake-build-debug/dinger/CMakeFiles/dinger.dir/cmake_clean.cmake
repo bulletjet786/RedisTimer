@@ -1,11 +1,13 @@
 file(REMOVE_RECURSE
+  "../../lib/libdinger.dll"
+  "../../lib/libdinger.dll.a"
+  "../../lib/libdinger.dll.manifest"
   "../../lib/libdinger.pdb"
-  "../../lib/libdinger.so"
-  "CMakeFiles/dinger.dir/adlist.c.o"
-  "CMakeFiles/dinger.dir/dict.c.o"
-  "CMakeFiles/dinger.dir/dinger.c.o"
-  "CMakeFiles/dinger.dir/t_delay.c.o"
-  "CMakeFiles/dinger.dir/utils.c.o"
+  "CMakeFiles/dinger.dir/adlist.c.obj"
+  "CMakeFiles/dinger.dir/dict.c.obj"
+  "CMakeFiles/dinger.dir/dinger.c.obj"
+  "CMakeFiles/dinger.dir/timer.c.obj"
+  "CMakeFiles/dinger.dir/utils.c.obj"
 )
 
 # Per-language clean rules from dependency scanning.
