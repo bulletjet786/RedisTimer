@@ -1,1 +1,1 @@
-add_library(hello MODULE dinger.c hello.h)
+add_library(hello MODULE hello.c hello.h)

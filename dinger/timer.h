@@ -17,31 +17,24 @@ typedef struct TimeWheel TimeWheel;
 typedef struct DelayMessageNode DelayMessageNode;
 
 /* 表示一个延迟消息节点 */
-typedef struct DelayMessage DelayMessage;
-struct DelayMessage {
+typedef struct TimerTaskBody TimerTaskBody;
+struct TimerTaskBody {
     char *id;
     char *body;
     uint32_t fire;
     list *location; // 在时间轮中的list
 };
-struct DelayMessageNode {
-    list *list;
-    listNode *node;
-};
-struct ChangeLog {
-
-};
 
 struct DelayQueueTypeObject {
     uint32_t size;                          // 整个延迟消息集中的数据量
-    dict *dict;                             // Map<MessageID, *DelayMessageNode>
+    dict *dict;                             // Map<char *, TimerTaskBody *>
 
-    list *prev;                             // List<id> 有序列表，保存比时间轮中小的数据
-    list *near[TIMER_NEAR_SIZE];            // near保存在TIMER_NEAR_SIZE秒内到达的消息
+    list *prev;                             // List<char*> 有序列表，保存比时间轮基底中小的数据
+    list *near[TIMER_NEAR_SIZE];            // near保存在TIMER_NEAR_SIZE秒内到达的消息，
     int nearBase;
     list *level[TIMER_LEVEL][TIMER_LEVEL_SIZE]; // level
     int levelBase[TIMER_LEVEL];             // 当前
-
+    uint32_t timeWheelBase;                 // 时间轮的基底时间
 };
 
 // todo: DelayMessageFree

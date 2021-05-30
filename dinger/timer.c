@@ -1,6 +1,10 @@
-#include "t_delay.h"
+#include "timer.h"
 #include "../include/redismodule.h"
 #include "utils.h"
+
+uint32_t timerGetTimeWheelBase(DelayQueueTypeObject *dto) {
+    return dto.timeBase;
+}
 
 list *computerTimeWheelBucket(DelayQueueTypeObject *dto, uint32_t delay, uint32_t fire) {
     // 如果可以在near时间内到达，则直接加入near链表
@@ -19,65 +23,75 @@ list *computerTimeWheelBucket(DelayQueueTypeObject *dto, uint32_t delay, uint32_
 }
 
 // 如果是新增返回1，如果是替换，返回0
-int dtoSetDelayMessage(RedisModuleCtx *ctx, DelayQueueTypeObject *dto, char *id, char *message, int32_t fire) {
-    int added = 1;
+int TimerSet(RedisModuleCtx *ctx, DelayQueueTypeObject *dto, char *id, char *message, int32_t fire, bool px,
+             ex bool) {
     uint32_t current = getTimestamp();
 
-    // 如果当前定时器已经处于被触发的状态，则取决于PX参与决定是否加入
-    if current > fire {
-
+    // 如果当前定时任务已经处于被触发的状态，则取决于PX参与决定是否加入
+    if (current > fire) {
+        if (!px) {
+            return 0;
+        }
     };
 
-    DelayMessage *dm = RedisModule_Alloc(sizeof(struct DelayMessage));
-    dm->id = id;
-    dm->body = message;
-    dm->fire = fire;
-    char *newId = RedisModule_Strdup(dm->id);
+    TimerTaskBody *task = RedisModule_Alloc(sizeof(struct TimerTaskBody));
+    task->id = id;
+    task->body = message;
+    task->fire = fire;
 
-    // 如果当前数据已经存在，则暂不支持 todo: NX
-    dictEntry *existNode = dictFind(dto->dict, dm->id);
-    if (existNode) {  // todo: dictCompareKeys
-        DelayMessageNode *dmNode = (DelayMessageNode *) (existNode->v.val);
-        listDelNode(dmNode->list, dmNode->node);
-        dictDelete(dto->dict, dm->id);
-        RedisModule_Free(dmNode->node);
-        RedisModule_Free(dmNode);
+    // 如果当前数据已经存在，则暂不支持
+    dictEntry *existNode = dictFind(dto->dict, task->id);
+    if (existNode && !nx) {
+        if (!nx) {
+            return 0;
+        }
+    }
+
+    // 如果数据存在，则先进行删除操作
+    int added = 1;
+    if (existNode) {   // todo: dictCompareKeys
+        TimerTaskBody *oldTask = (TimerTaskBody *) (existNode->v.val);
+        listDelNode(oldTask->list, dmNode->node);
+        dictDelete(dto->dict, oldTask->id);
+        RedisModule_Free(oldTask->id);
+        RedisModule_Free(oldTask->body);
+        RedisModule_Free(oldTask);
         added = 0;
     }
 
-    // 如果当前数据不存在
-    if (!existNode) {
-        // 如果比时间轮的时间小，则插入prev有序列表
-        list *insertedList;
-        if (delay < current) {
-            // 如果list为空，则直接插入
-            if (dto->prev->len == 0) {
-                listAddNodeHead(dto->prev, newId);
-            } else {
-                listIter iter;
-                listNode *node;
+    // 如果比时间轮的时间小，则插入prev有序列表
+    uint32_t timeWheelBase = timerGetTimeWheelBase(dto);
+    list *insertedList;
+    if (fire < timeWheelBase) {
+        // 如果list为空，则直接插入
+        if (dto->prev->len == 0) {
+            listAddNodeHead(dto->prev, task->id);
+        } else {
+            listIter iter;
+            listNode *node;
 
-                // 查找到第一个比当前元素大的节点，插入到该位置前面
-                listRewindTail(dto->prev, &iter);
-                while ((node = listNext(&iter)) != NULL) {
-                    DelayMessage *iterDm = (DelayMessage *) node->value;
-                    if (iterDm->fire > dm->fire) {
-                        continue;
-                    }
+            // 查找到第一个比当前元素大的节点，插入到该位置前面
+            listRewindTail(dto->prev, &iter);
+            while ((node = listNext(&iter)) != NULL) {
+                char *id = (char *) node->value;
+                if ((TimerTaskBody *) (dictFind(id)->v.val)->fire > task->fire) {
+                    break;
                 }
-                listInsertNode(dto->prev, node, newId, 1);
             }
-        } else {    // 如果比时间轮的时间大，则插入到timeWheel中
-            insertedList = computerTimeWheelBucket(dto, delay, dm->fire);
-            if (insertedList == NULL) {
-                return 0;
-            }
-            // 插入到链表尾部
-            listAddNodeTail(insertedList, newId);
+            task->location = dto->prev;
+            listInsertNode(dto->prev, node, task->id, 1);
         }
-        dictAdd(dto->dict, dm->id, dm);
-        dto->size += added;
+    } else {    // 如果比时间轮的时间大，则插入到timeWheel中
+        insertedList = computerTimeWheelBucket(dto, delay, dm->fire);
+        if (insertedList == NULL) {
+            return 0;
+        }
+        task->location = insertedList;
+        // 插入到链表尾部
+        listAddNodeTail(insertedList, task->id);
     }
+    dictAdd(dto->dict, id, task);
+    dto->size += added;
 
     return added;
 }
@@ -113,11 +127,11 @@ void steal(RedisModuleCtx *ctx, DelayQueueTypeObject *dto) {
                 uint32_t delay = iterDm->fire - current;
                 computerTimeWheelBucket()
                 // 计算要插入的level节点
-                list *to = dto->level[i-1][iterDm->fire];
+                list *to = dto->level[i - 1][iterDm->fire];
                 listDelNode(from, node);
-                listAddNodeHead(dto, )
+//                listAddNodeHead(dto,)
             }
-            listIter
+//            listIter
 
         }
     }
