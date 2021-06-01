@@ -1,1 +1,1 @@
-add_library(dinger MODULE dinger.c dict.c dict.h utils.c utils.h t_delay.c t_delay.h ../include/redismodule.h)
+add_library(dinger MODULE dinger.c dict.c dict.h utils.c utils.h timer.c timer.h adlist.c adlist.h ../include/redismodule.h)

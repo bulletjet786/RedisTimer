@@ -4,13 +4,13 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/Users/wangzijie/CLionProjects/RedisLeague/dinger/adlist.c" "/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/dinger/CMakeFiles/dinger.dir/adlist.c.o"
-  "/Users/wangzijie/CLionProjects/RedisLeague/dinger/dict.c" "/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/dinger/CMakeFiles/dinger.dir/dict.c.o"
-  "/Users/wangzijie/CLionProjects/RedisLeague/dinger/dinger.c" "/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/dinger/CMakeFiles/dinger.dir/dinger.c.o"
-  "/Users/wangzijie/CLionProjects/RedisLeague/dinger/t_delay.c" "/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/dinger/CMakeFiles/dinger.dir/t_delay.c.o"
-  "/Users/wangzijie/CLionProjects/RedisLeague/dinger/utils.c" "/Users/wangzijie/CLionProjects/RedisLeague/cmake-build-debug/dinger/CMakeFiles/dinger.dir/utils.c.o"
+  "C:/Users/85123/CLionProjects/RedisTimer/dinger/adlist.c" "C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/dinger/CMakeFiles/dinger.dir/adlist.c.obj"
+  "C:/Users/85123/CLionProjects/RedisTimer/dinger/dict.c" "C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/dinger/CMakeFiles/dinger.dir/dict.c.obj"
+  "C:/Users/85123/CLionProjects/RedisTimer/dinger/dinger.c" "C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/dinger/CMakeFiles/dinger.dir/dinger.c.obj"
+  "C:/Users/85123/CLionProjects/RedisTimer/dinger/timer.c" "C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/dinger/CMakeFiles/dinger.dir/timer.c.obj"
+  "C:/Users/85123/CLionProjects/RedisTimer/dinger/utils.c" "C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/dinger/CMakeFiles/dinger.dir/utils.c.obj"
   )
-set(CMAKE_C_COMPILER_ID "AppleClang")
+set(CMAKE_C_COMPILER_ID "GNU")
 
 # Preprocessor definitions for this target.
 set(CMAKE_TARGET_DEFINITIONS_C

@@ -1,7 +1,9 @@
 file(REMOVE_RECURSE
+  "../../lib/libhello.dll"
+  "../../lib/libhello.dll.a"
+  "../../lib/libhello.dll.manifest"
   "../../lib/libhello.pdb"
-  "../../lib/libhello.so"
-  "CMakeFiles/hello.dir/dinger.c.o"
+  "CMakeFiles/hello.dir/hello.c.obj"
 )
 
 # Per-language clean rules from dependency scanning.
