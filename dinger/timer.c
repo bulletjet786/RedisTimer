@@ -1,4 +1,5 @@
 #include "timer.h"
+#include "tmalloc.h"
 #include "../include/redismodule.h"
 #include "utils.h"
 
@@ -34,7 +35,7 @@ int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *message, int32_t
         }
     };
 
-    TimerTaskBody *task = RedisModule_Alloc(sizeof(struct TimerTaskBody));
+    TimerTask *task = tmalloc(sizeof(struct TimerTask));
     task->id = id;
     task->body = message;
     task->fire = fire;
@@ -50,13 +51,13 @@ int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *message, int32_t
     // 如果数据存在，则先进行删除操作
     int added = 1;
     if (existNode) {   // todo: dictCompareKeys
-        TimerTaskBody *oldTask = (TimerTaskBody *) (existNode->v.val);
+        TimerTask *oldTask = (TimerTask *) (existNode->v.val);
         listNode *node = listSearchKey(oldTask->location, oldTask->id);
         listDelNode(oldTask->location, node);
         dictDelete(timer->dict, oldTask->id);
-        RedisModule_Free(oldTask->id);
-        RedisModule_Free(oldTask->body);
-        RedisModule_Free(oldTask);
+        tfree(oldTask->id);
+        tfree(oldTask->body);
+        tfree(oldTask);
         added = 0;
     }
 
@@ -75,7 +76,7 @@ int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *message, int32_t
             listRewindTail(timer->prev, &iter);
             while ((node = listNext(&iter)) != NULL) {
                 char *id = (char *) node->value;
-                if (((TimerTaskBody *) (dictFind(timer->dict, id))->v.val)->fire > task->fire) {
+                if (((TimerTask *) (dictFind(timer->dict, id))->v.val)->fire > task->fire) {
                     break;
                 }
             }
@@ -83,7 +84,7 @@ int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *message, int32_t
             listInsertNode(timer->prev, node, task->id, 1);
         }
     } else {    // 如果比时间轮的时间大，则插入到timeWheel中
-        insertedList = computerTimeWheelBucket(timer, task->fire - timerGetTimeWheelBase(timer), dm->fire);
+        insertedList = computerTimeWheelBucket(timer, task->fire - timerGetTimeWheelBase(timer), task->fire);
         if (insertedList == NULL) {
             return 0;
         }
@@ -124,9 +125,9 @@ void steal(RedisModuleCtx *ctx, Timer *dto) {
             list *from = dto->level[i][dto->levelBase];
             listRewind(from, &iter);
             while ((node = listNext(&iter)) != NULL) {
-                DelayMessage *iterDm = (DelayMessage *) node->value;
+                TimerTask *iterDm = (TimerTask *) node->value;
                 uint32_t delay = iterDm->fire - current;
-                computerTimeWheelBucket()
+                computerTimeWheelBucket();
                 // 计算要插入的level节点
                 list *to = dto->level[i - 1][iterDm->fire];
                 listDelNode(from, node);
@@ -177,16 +178,16 @@ void dtoTryPushTimeWheel(RedisModuleCtx *ctx, Timer *dto) {
 }
 
 // 从延迟消息中弹出一个到达的消息
-DelayMessage *dtoPopDelayMessage(RedisModuleCtx *ctx, Timer *dto, DelayMessage *dm) {
+TimerTask *dtoPopDelayMessage(RedisModuleCtx *ctx, Timer *dto, TimerTask *task) {
     if (dto->size == 0) {
         return NULL;
     }
 
     // 检查prev是否有消息
-    DelayMessage *ret;
+    TimerTask *ret;
     if (dto->prev->len != 0) {
         listNode *node = listFirst(dto->prev);
-        ret = (DelayMessage *) node->value;
+        ret = (TimerTask *) node->value;
         listDelNode(dto->prev, node);
         dictDelete(dto->dict, ret->id);
         return ret;
@@ -202,7 +203,7 @@ DelayMessage *dtoPopDelayMessage(RedisModuleCtx *ctx, Timer *dto, DelayMessage *
 Timer *CreateDelayTypeObject() {
     Timer *dto;
 
-    if ((dto = RedisModule_Alloc(sizeof(*dto))) == NULL)
+    if ((dto = tmalloc(sizeof(*dto))) == NULL)
         return NULL;
 
     dto->prev = listCreate();
@@ -222,15 +223,15 @@ Timer *CreateDelayTypeObject() {
 
 // 向该时间轮中插入一条消息
 // 前置条件：该消息的delay应不小于时间轮的startPoint，如果小于，则插入失败并返回0，否则返回1
-int TwAddDelayMessage(TimeWheel *tw, DelayMessage *dm, list **insertedList, listNode **insertedNode) {
-    list *bucket = computerTimeWheelBucket(tw, dm->fire);
+int TwAddDelayMessage(TimeWheel *tw, TimerTask *task, list **insertedList, listNode **insertedNode) {
+    list *bucket = computerTimeWheelBucket(tw, task->fire);
     if (bucket == NULL) {
         return 0;
     }
 
     // 插入到链表尾部
     listNode *node;
-    listAddNodeTail(bucket, dm);
+    listAddNodeTail(bucket, task);
     node = listLast(bucket);
     if (insertedList != NULL) {
         insertedList = &bucket;
@@ -241,7 +242,7 @@ int TwAddDelayMessage(TimeWheel *tw, DelayMessage *dm, list **insertedList, list
     return 1;
 }
 
-DelayMessage *TwPopDelayMessage(TimeWheel *tw) {
+TimerTask *TwPopDelayMessage(TimeWheel *tw) {
 
 }
 

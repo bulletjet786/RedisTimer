@@ -19,8 +19,8 @@ typedef struct TimeWheel TimeWheel;
 typedef struct DelayMessageNode DelayMessageNode;
 
 /* 表示一个延迟消息节点 */
-typedef struct TimerTaskBody TimerTaskBody;
-struct TimerTaskBody {
+typedef struct TimerTask TimerTask;
+struct TimerTask {
     char *id;
     char *body;
     uint32_t fire;
@@ -29,7 +29,7 @@ struct TimerTaskBody {
 
 struct Timer {
     uint32_t size;                          // 整个延迟消息集中的数据量
-    dict *dict;                             // Map<char *, TimerTaskBody *>
+    dict *dict;                             // Map<char *, TimerTask *>
 
     list *prev;                             // List<char*> 有序列表，保存比时间轮基底中小的数据
     list *near[TIMER_NEAR_SIZE];            // near保存在TIMER_NEAR_SIZE秒内到达的消息，

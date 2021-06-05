@@ -40,7 +40,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <sys/time.h>
-#include "../include/redismodule.h"
+#include "tmalloc.h"
 #include "dict.h"
 
 #ifndef DICT_BENCHMARK_MAIN
@@ -111,7 +111,7 @@ static void _dictReset(dictht *ht) {
 /* 创建一个字典 */
 dict *dictCreate(dictType *type,
                  void *privDataPtr) {
-    dict *d = RedisModule_Alloc(sizeof(*d));
+    dict *d = tmalloc(sizeof(*d));
 
     _dictInit(d, type, privDataPtr);
     return d;
@@ -160,7 +160,7 @@ int dictExpand(dict *d, unsigned long size) {
     /* 分配一个新的hashtable并且设置所有pointer为NULL */
     n.size = realsize;
     n.sizemask = realsize - 1;
-    n.table = RedisModule_Calloc(realsize, sizeof(dictEntry *));
+    n.table = tcalloc(realsize, sizeof(dictEntry *));
     n.used = 0;
 
     /* 是否是初始化? 如果是则只需要初始化ht[0] */
@@ -216,7 +216,7 @@ int dictRehash(dict *d, int n) {
 
     /* 当旧字典数据为空时，释放旧表，切换新表，结束rehash过程 */
     if (d->ht[0].used == 0) {
-        RedisModule_Free(d->ht[0].table);
+        tfree(d->ht[0].table);
         d->ht[0] = d->ht[1];
         _dictReset(&d->ht[1]);
         d->rehashidx = -1;
@@ -325,7 +325,7 @@ dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing) {
      * 使用头插法：在数据库系统中，最近被插入的元素将会被更频繁的访问。
      * */
     ht = dictIsRehashing(d) ? &d->ht[1] : &d->ht[0];
-    entry = RedisModule_Alloc(sizeof(*entry));
+    entry = tmalloc(sizeof(*entry));
     entry->next = ht->table[index];
     ht->table[index] = entry;
     ht->used++;
@@ -403,7 +403,7 @@ static dictEntry *dictGenericDelete(dict *d, const void *key, int nofree) {
                 if (!nofree) {
                     dictFreeKey(d, he);
                     dictFreeVal(d, he);
-                    RedisModule_Free(he);
+                    tfree(he);
                 }
                 d->ht[table].used--;
                 return he;
@@ -452,7 +452,7 @@ void dictFreeUnlinkedEntry(dict *d, dictEntry *he) {
     if (he == NULL) return;
     dictFreeKey(d, he);
     dictFreeVal(d, he);
-    RedisModule_Free(he);
+    tfree(he);
 }
 
 /* Destroy an entire dictionary */
@@ -470,13 +470,13 @@ int _dictClear(dict *d, dictht *ht, void(callback)(void *)) {
             nextHe = he->next;
             dictFreeKey(d, he);
             dictFreeVal(d, he);
-            RedisModule_Free(he);
+            tfree(he);
             ht->used--;
             he = nextHe;
         }
     }
     /* Free the table and the allocated cache structure */
-    RedisModule_Free(ht->table);
+    tfree(ht->table);
     /* Re-initialize the table */
     _dictReset(ht);
     return DICT_OK; /* never fails */
@@ -486,7 +486,7 @@ int _dictClear(dict *d, dictht *ht, void(callback)(void *)) {
 void dictRelease(dict *d) {
     _dictClear(d, &d->ht[0], NULL);
     _dictClear(d, &d->ht[1], NULL);
-    RedisModule_Free(d);
+    tfree(d);
 }
 
 dictEntry *dictFind(dict *d, const void *key) {
@@ -556,7 +556,7 @@ long long dictFingerprint(dict *d) {
 }
 
 dictIterator *dictGetIterator(dict *d) {
-    dictIterator *iter = RedisModule_Alloc(sizeof(*iter));
+    dictIterator *iter = tmalloc(sizeof(*iter));
 
     iter->d = d;
     iter->table = 0;
@@ -613,7 +613,7 @@ void dictReleaseIterator(dictIterator *iter) {
         if (iter->safe)
             iter->d->iterators--;
     }
-    RedisModule_Free(iter);
+    tfree(iter);
 }
 
 /* Return a random entry from the hash table. Useful to
@@ -629,7 +629,7 @@ dictEntry *dictGetRandomKey(dict *d) {
         do {
             /* We are sure there are no elements in indexes from 0
              * to rehashidx-1 */
-            h = d->rehashidx + (random() % (d->ht[0].size +
+            h = d->rehashidx + (rand() % (d->ht[0].size +
                                             d->ht[1].size -
                                             d->rehashidx));
             he = (h >= d->ht[0].size) ? d->ht[1].table[h - d->ht[0].size] :
@@ -637,7 +637,7 @@ dictEntry *dictGetRandomKey(dict *d) {
         } while (he == NULL);
     } else {
         do {
-            h = random() & d->ht[0].sizemask;
+            h = rand() & d->ht[0].sizemask;
             he = d->ht[0].table[h];
         } while (he == NULL);
     }
@@ -652,7 +652,7 @@ dictEntry *dictGetRandomKey(dict *d) {
         he = he->next;
         listlen++;
     }
-    listele = random() % listlen;
+    listele = rand() % listlen;
     he = orighe;
     while (listele--) he = he->next;
     return he;
