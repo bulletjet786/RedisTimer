@@ -1,18 +1,19 @@
-#ifndef REDISLEAGUE_T_DELAY_H
-#define REDISLEAGUE_T_DELAY_H
+#ifndef REDISLEAGUE_TIMER_H
+#define REDISLEAGUE_TIMER_H
 
 #include "adlist.h"
 #include "dict.h"
 #include <stdlib.h>
 #include <string.h>
+#include "../include/redismodule.h"
 
-const uint32_t TIMER_NEAR_SHIFT = 8;
-const uint32_t TIMER_NEAR_SIZE = 256;
-const uint32_t TIMER_NEAR_MASK = TIMER_NEAR_SIZE - 1;
-const uint32_t TIMER_LEVEL_SHIFT = 6;
-const uint32_t TIMER_LEVEL_SIZE = 64;
-const uint32_t TIMER_LEVEL_MASK = TIMER_LEVEL_SIZE - 1;
-const uint32_t TIMER_LEVEL = 4;
+#define TIMER_NEAR_SHIFT 8
+#define TIMER_NEAR_SIZE 256
+#define TIMER_NEAR_MASK (TIMER_NEAR_SIZE - 1)
+#define TIMER_LEVEL_SHIFT 6
+#define TIMER_LEVEL_SIZE 64
+#define TIMER_LEVEL_MASK (TIMER_LEVEL_SIZE - 1)
+#define TIMER_LEVEL 4
 
 typedef struct Timer Timer;
 typedef struct TimeWheel TimeWheel;
@@ -39,18 +40,8 @@ struct Timer {
     uint32_t timeWheelBase;                 // 时间轮的基底时间
 };
 
-// todo: DelayMessageFree
-// todo: DelayMessageDup
-// todo: DelayMessageMatch
-// 如果未指定，则由list调用者进行删除，如果指定，则listDelNode()和listEmpty()将会调用该函数进行删除
-int TimerListMatch(void *ptr, void *key) {
-    return strcmp(ptr, key);
-};
+int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *body, uint32_t fire, int px,
+             int nx);
+Timer *CreateTimer();
 
-// 如果未指定，则listDup将会拷贝value原始指针，如果指定了，则会使用该函数进行拷贝
-int TimerDictKeyCompare(void *privdata, const void *key1, const void *key2) {
-    return strcmp(key1, key2);
-};
-
-
-#endif //REDISLEAGUE_T_DELAY_H
+#endif

@@ -1,3 +1,5 @@
+#define TEST
+
 #ifdef TEST
 
 #include <malloc.h>

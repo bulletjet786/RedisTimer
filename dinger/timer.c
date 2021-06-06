@@ -2,6 +2,60 @@
 #include "tmalloc.h"
 #include "../include/redismodule.h"
 #include "utils.h"
+#include <strings.h>
+
+// 如果未指定，则由list调用者进行删除，如果指定，则listDelNode()和listEmpty()将会调用该函数进行删除
+int TimerListMatch(void *ptr, void *key) {
+    return strcmp(ptr, key);
+};
+
+uint64_t TimerDictStrHash(const void *key) {
+    return dictGenHashFunction(key, strlen(key));
+}
+
+
+// 如果未指定，则listDup将会拷贝value原始指针，如果指定了，则会使用该函数进行拷贝
+int TimerDictKeyCompare(void *privdata, const void *key1, const void *key2) {
+    return strcmp(key1, key2);
+};
+
+dictType timerDictType = {
+        TimerDictStrHash,
+        NULL,
+        NULL,
+        TimerDictKeyCompare,
+        NULL,
+        NULL
+};
+
+// 如果创建失败，返回NULL
+Timer *CreateTimer() {
+    Timer *timer;
+
+    if ((timer = tmalloc(sizeof(Timer))) == NULL)
+        return NULL;
+
+    timer->prev = listCreate();
+    listSetMatchMethod(timer->prev, TimerListMatch);
+
+    for (int i = 0; i < TIMER_NEAR_SIZE; ++i) {
+        timer->near[i] = listCreate();
+        listSetMatchMethod(timer->near[i], TimerListMatch);
+    }
+    for (int i = 0; i < TIMER_LEVEL; ++i) {
+        for (int j = 0; j < TIMER_LEVEL_SIZE; ++j) {
+            timer->level[i][j] = listCreate();
+            listSetMatchMethod(timer->level[i][j], TimerListMatch);
+        }
+    }
+
+    timer->dict = dictCreate(&timerDictType, NULL);
+
+    timer->timeWheelBase = getTimestamp();
+
+    return timer;
+}
+
 
 uint32_t timerGetTimeWheelBase(Timer *timer) {
     return timer->timeWheelBase;
@@ -24,7 +78,9 @@ list *computerTimeWheelBucket(Timer *timer, uint32_t delay, uint32_t fire) {
 }
 
 // 如果是新增返回1，如果是替换，返回0
-int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *message, int32_t fire, int px,
+// px 即使该定时任务已经到达，仍然添加
+// nx 仅当该定时任务不存在时，才进行添加
+int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *body, uint32_t fire, int px,
              int nx) {
     uint32_t current = getTimestamp();
 
@@ -33,24 +89,22 @@ int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *message, int32_t
         if (!px) {
             return 0;
         }
-    };
+    }
 
     TimerTask *task = tmalloc(sizeof(struct TimerTask));
     task->id = id;
-    task->body = message;
+    task->body = body;
     task->fire = fire;
 
     // 如果当前数据已经存在，则暂不支持
     dictEntry *existNode = dictFind(timer->dict, task->id);
     if (existNode && !nx) {
-        if (!nx) {
-            return 0;
-        }
+        return 0;
     }
 
     // 如果数据存在，则先进行删除操作
     int added = 1;
-    if (existNode) {   // todo: dictCompareKeys
+    if (existNode) {
         TimerTask *oldTask = (TimerTask *) (existNode->v.val);
         listNode *node = listSearchKey(oldTask->location, oldTask->id);
         listDelNode(oldTask->location, node);
@@ -97,7 +151,7 @@ int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *message, int32_t
 
     return added;
 }
-
+/*
 void steal(RedisModuleCtx *ctx, Timer *dto) {
     // 不需要从level层进行偷取
     if (dto->nearBase != 0) {
@@ -149,7 +203,7 @@ void nextSecond(RedisModuleCtx *ctx, Timer *dto) {
 
             }
         }
-        steal(ctx, dto, 0, 1);
+//        steal(ctx, dto, 0, 1);
         for (int i = 0; i < TIMER_LEVEL; i++) {
             if (dto->level) {
 
@@ -164,7 +218,7 @@ void nextSecond(RedisModuleCtx *ctx, Timer *dto) {
 // 2、如果不存在已到达的消息，则推动到当前时间处
 void dtoTryPushTimeWheel(RedisModuleCtx *ctx, Timer *dto) {
     uint32_t current = getTimestamp();
-
+/*
     // 一直推进，直到推进到当前时间，如果存在已到达但是未消费的消息处，则停止推进
     int32_t diff = current - (dto->baseTime + dto->nearBase);
     while (diff > 0) {
@@ -175,6 +229,7 @@ void dtoTryPushTimeWheel(RedisModuleCtx *ctx, Timer *dto) {
     if (dto->near[dto->nearBase]->len == 0) {
 
     }
+
 }
 
 // 从延迟消息中弹出一个到达的消息
@@ -194,32 +249,7 @@ TimerTask *dtoPopDelayMessage(RedisModuleCtx *ctx, Timer *dto, TimerTask *task) 
     }
 
     // 尝试从时间轮中弹出一个消息，此时时间轮必然有数据
-    if ()
-
-
 }
-
-// 如果创建失败，返回NULL
-Timer *CreateDelayTypeObject() {
-    Timer *dto;
-
-    if ((dto = tmalloc(sizeof(*dto))) == NULL)
-        return NULL;
-
-    dto->prev = listCreate();
-
-    for (int i = 0; i < TIMER_NEAR_SIZE; ++i) {
-        dto->near[i] = listCreate();
-    }
-    for (int i = 0; i < TIMER_LEVEL; ++i) {
-        for (int j = 0; j < TIMER_LEVEL_SIZE; ++j) {
-            dto->level[i][j] = listCreate();
-        }
-    }
-
-    return dto;
-}
-
 
 // 向该时间轮中插入一条消息
 // 前置条件：该消息的delay应不小于时间轮的startPoint，如果小于，则插入失败并返回0，否则返回1
@@ -254,3 +284,4 @@ void delDelayMessage(TimeWheel *tw, char *messageId) {
 void next() {
 
 }
+ */

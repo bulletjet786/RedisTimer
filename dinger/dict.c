@@ -703,7 +703,7 @@ unsigned int dictGetSomeKeys(dict *d, dictEntry **des, unsigned int count) {
         maxsizemask = d->ht[1].sizemask;
 
     /* Pick a random point inside the larger table. */
-    unsigned long i = random() & maxsizemask;
+    unsigned long i = rand() & maxsizemask;
     unsigned long emptylen = 0; /* Continuous empty entries so far. */
     while (stored < count && maxsteps--) {
         for (j = 0; j < tables; j++) {
@@ -728,7 +728,7 @@ unsigned int dictGetSomeKeys(dict *d, dictEntry **des, unsigned int count) {
             if (he == NULL) {
                 emptylen++;
                 if (emptylen >= 5 && emptylen > count) {
-                    i = random() & maxsizemask;
+                    i = rand() & maxsizemask;
                     emptylen = 0;
                 }
             } else {
