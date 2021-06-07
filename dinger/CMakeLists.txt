@@ -1,1 +1,2 @@
 add_library(dinger MODULE dinger.c dict.c dict.h utils.c utils.h timer.c timer.h adlist.c adlist.h ../include/redismodule.h)
+add_executable(test test_timer.c timer.h timer.c dict.c dict.h utils.c utils.h adlist.c adlist.h siphash.c)

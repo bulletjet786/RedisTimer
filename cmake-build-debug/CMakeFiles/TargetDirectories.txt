@@ -1,8 +1,0 @@
-C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/hello/CMakeFiles/hello.dir
-C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/hello/CMakeFiles/edit_cache.dir
-C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/hello/CMakeFiles/rebuild_cache.dir
-C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/dinger/CMakeFiles/dinger.dir
-C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/dinger/CMakeFiles/edit_cache.dir
-C:/Users/85123/CLionProjects/RedisTimer/cmake-build-debug/dinger/CMakeFiles/rebuild_cache.dir

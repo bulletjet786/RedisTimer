@@ -34,6 +34,7 @@
  */
 
 #include <stdint.h>
+#include "tmalloc.h"
 
 #ifndef __DICT_H
 #define __DICT_H

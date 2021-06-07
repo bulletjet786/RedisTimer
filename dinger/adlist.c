@@ -28,10 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <stdlib.h>
+#include "tmalloc.h"
 #include "adlist.h"
-#include "../include/redismodule.h"
 
 /* Create a new list. The created list can be freed with
  * AlFreeList(), but private value of every node need to be freed
@@ -42,7 +41,7 @@ list *listCreate(void)
 {
     struct list *list;
 
-    if ((list = RedisModule_Alloc(sizeof(*list))) == NULL)
+    if ((list = tmalloc(sizeof(*list))) == NULL)
         return NULL;
     list->head = list->tail = NULL;
     list->len = 0;
@@ -63,7 +62,7 @@ void listEmpty(list *list)
     while(len--) {
         next = current->next;
         if (list->free) list->free(current->value);
-        RedisModule_Free(current);
+        tfree(current);
         current = next;
     }
     list->head = list->tail = NULL;
@@ -76,7 +75,7 @@ void listEmpty(list *list)
 void listRelease(list *list)
 {
     listEmpty(list);
-    RedisModule_Free(list);
+    tfree(list);
 }
 
 /* Add a new node to the list, to head, containing the specified 'value'
@@ -89,7 +88,7 @@ list *listAddNodeHead(list *list, void *value)
 {
     listNode *node;
 
-    if ((node = RedisModule_Alloc(sizeof(*node))) == NULL)
+    if ((node = tmalloc(sizeof(*node))) == NULL)
         return NULL;
     node->value = value;
     if (list->len == 0) {
@@ -115,7 +114,7 @@ list *listAddNodeTail(list *list, void *value)
 {
     listNode *node;
 
-    if ((node = RedisModule_Alloc(sizeof(*node))) == NULL)
+    if ((node = tmalloc(sizeof(*node))) == NULL)
         return NULL;
     node->value = value;
     if (list->len == 0) {
@@ -134,7 +133,7 @@ list *listAddNodeTail(list *list, void *value)
 list *listInsertNode(list *list, listNode *old_node, void *value, int after) {
     listNode *node;
 
-    if ((node = RedisModule_Alloc(sizeof(*node))) == NULL)
+    if ((node = tmalloc(sizeof(*node))) == NULL)
         return NULL;
     node->value = value;
     if (after) {
@@ -175,7 +174,7 @@ void listDelNode(list *list, listNode *node)
     else
         list->tail = node->prev;
     if (list->free) list->free(node->value);
-    RedisModule_Free(node);
+    tfree(node);
     list->len--;
 }
 
@@ -187,7 +186,7 @@ listIter *listGetIterator(list *list, int direction)
 {
     listIter *iter;
 
-    if ((iter = RedisModule_Alloc(sizeof(*iter))) == NULL) return NULL;
+    if ((iter = tmalloc(sizeof(*iter))) == NULL) return NULL;
     if (direction == AL_START_HEAD)
         iter->next = list->head;
     else
@@ -198,7 +197,7 @@ listIter *listGetIterator(list *list, int direction)
 
 /* Release the iterator memory */
 void listReleaseIterator(listIter *iter) {
-    RedisModule_Free(iter);
+    tfree(iter);
 }
 
 /* Create an iterator in the list private iterator structure */
