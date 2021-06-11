@@ -64,14 +64,14 @@ uint32_t timerGetTimeWheelBase(Timer *timer) {
 list *computerTimeWheelBucket(Timer *timer, uint32_t delay, uint32_t fire) {
     // 如果可以在near时间内到达，则直接加入near链表
     if (delay < TIMER_NEAR_SIZE) {
-        return timer->near[delay];
+        return timer->near[(delay+timer->nearBase)/TIMER_NEAR_SIZE];
     }
     // 否则查找合适的level
     for (int i = 0; i < TIMER_LEVEL; i++) {
         uint32_t size = (uint32_t) 1 << (TIMER_NEAR_SHIFT + (TIMER_LEVEL_SHIFT * (i + 1)));
         if (fire < size) {
             uint32_t index = delay >> (TIMER_NEAR_SHIFT + (TIMER_LEVEL_SHIFT * i)) & TIMER_LEVEL_MASK;
-            return timer->level[i][index];
+            return timer->level[i][(index+timer->level[i])/TIMER_LEVEL_SIZE];
         }
     }
     return NULL;
@@ -136,6 +136,7 @@ int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *body, uint32_t f
             }
             task->location = timer->prev;
             listInsertNode(timer->prev, node, task->id, 1);
+            listReleaseIterator(&iter)
         }
     } else {    // 如果比时间轮的时间大，则插入到timeWheel中
         insertedList = computerTimeWheelBucket(timer, task->fire - timerGetTimeWheelBase(timer), task->fire);
@@ -151,6 +152,7 @@ int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *body, uint32_t f
 
     return added;
 }
+
 /*
 void steal(RedisModuleCtx *ctx, Timer *dto) {
     // 不需要从level层进行偷取
@@ -271,8 +273,41 @@ int TwAddDelayMessage(TimeWheel *tw, TimerTask *task, list **insertedList, listN
     }
     return 1;
 }
+*/
+list *TimerPopTask(RedisModuleCtx *ctx, Timer *timer, int until, int maxTotal, int ackMode) {
+    uint32_t current = getTimestamp();
 
-TimerTask *TwPopDelayMessage(TimeWheel *tw) {
+    list *result = listCreate();
+
+    int i = 0;
+    if (listLength(timer.prev->) > 0) {
+        // 优先从prev中取
+        listIter iter;
+        listNode *node;
+        // 查找到第一个比当前元素大的节点，插入到该位置前面
+        listRewindTail(timer->prev, &iter);
+        while ((node = listNext(&iter)) != NULL) {
+            char *id = (char *) node->value;
+            if (((TimerTask *) (dictFind(timer->dict, id))->v.val)->fire > until) {
+                goto ret;
+            } else {
+                listAddNodeTail(result, node->value);
+                listDelNode(timer->prev, node);
+                if (++i >= maxTotal) {
+                    goto ret;
+                }
+            }
+        }
+        listReleaseIterator(&iter)
+    }
+
+    for ()
+
+    ret:
+
+
+
+}
 
 }
 
@@ -284,4 +319,3 @@ void delDelayMessage(TimeWheel *tw, char *messageId) {
 void next() {
 
 }
- */

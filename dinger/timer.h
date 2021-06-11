@@ -34,10 +34,10 @@ struct Timer {
 
     list *prev;                             // List<char*> 有序列表，保存比时间轮基底中小的数据
     list *near[TIMER_NEAR_SIZE];            // near保存在TIMER_NEAR_SIZE秒内到达的消息，
-    int nearBase;
+    int nearBase;                           // 当前时间轮的基底时间
     list *level[TIMER_LEVEL][TIMER_LEVEL_SIZE]; // level
     int levelBase[TIMER_LEVEL];             // 当前
-    uint32_t timeWheelBase;                 // 时间轮的基底时间
+    uint32_t timeWheelBase;                 // 时间轮的基底时间，时间下限，随着时间懒增加
 };
 
 int TimerSet(RedisModuleCtx *ctx, Timer *timer, char *id, char *body, uint32_t fire, int px,
